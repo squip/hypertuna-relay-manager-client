@@ -4,9 +4,8 @@
  * Using nobleSecp256k1 for cryptography
  */
 
-// Access the libraries through window object since they're loaded via script tags
-const nobleSecp256k1 = window.nobleSecp256k1;
-const browserifyCipher = window.browserifyCipher;
+// Import from local module if available, otherwise try window object
+import { nobleSecp256k1, browserifyCipher } from './crypto-libraries.js';
 
 export class NostrUtils {
     /**
@@ -36,7 +35,12 @@ export class NostrUtils {
      * @returns {string} - Hex-encoded private key
      */
     static generatePrivateKey() {
-        return this.bytesToHex(nobleSecp256k1.utils.randomPrivateKey());
+        // Access nobleSecp256k1 from either the import or window global
+        const secp = nobleSecp256k1 || window.nobleSecp256k1;
+        if (!secp) {
+            throw new Error('Noble Secp256k1 library not available');
+        }
+        return this.bytesToHex(secp.utils.randomPrivateKey());
     }
     
     /**
@@ -45,7 +49,12 @@ export class NostrUtils {
      * @returns {string} - Hex-encoded public key
      */
     static getPublicKey(privateKey) {
-        return nobleSecp256k1.getPublicKey(privateKey, true).substring(2);
+        // Access nobleSecp256k1 from either the import or window global
+        const secp = nobleSecp256k1 || window.nobleSecp256k1;
+        if (!secp) {
+            throw new Error('Noble Secp256k1 library not available');
+        }
+        return secp.getPublicKey(privateKey, true).substring(2);
     }
     
     /**
@@ -55,6 +64,12 @@ export class NostrUtils {
      * @returns {Promise<Object>} - Signed event
      */
     static async signEvent(event, privateKey) {
+        // Access nobleSecp256k1 from either the import or window global
+        const secp = nobleSecp256k1 || window.nobleSecp256k1;
+        if (!secp) {
+            throw new Error('Noble Secp256k1 library not available');
+        }
+        
         // Prepare the event for signing
         const eventData = JSON.stringify([
             0,
@@ -67,13 +82,13 @@ export class NostrUtils {
         
         // Generate the event ID
         event.id = this.bytesToHex(
-            await nobleSecp256k1.utils.sha256(
+            await secp.utils.sha256(
                 new TextEncoder().encode(eventData)
             )
         );
         
         // Sign the event
-        event.sig = await nobleSecp256k1.schnorr.sign(event.id, privateKey);
+        event.sig = await secp.schnorr.sign(event.id, privateKey);
         
         return event;
     }
@@ -85,6 +100,12 @@ export class NostrUtils {
      */
     static async verifySignature(event) {
         try {
+            // Access nobleSecp256k1 from either the import or window global
+            const secp = nobleSecp256k1 || window.nobleSecp256k1;
+            if (!secp) {
+                throw new Error('Noble Secp256k1 library not available');
+            }
+            
             // Recreate the event ID
             const eventData = JSON.stringify([
                 0,
@@ -96,7 +117,7 @@ export class NostrUtils {
             ]);
             
             const id = this.bytesToHex(
-                await nobleSecp256k1.utils.sha256(
+                await secp.utils.sha256(
                     new TextEncoder().encode(eventData)
                 )
             );
@@ -107,7 +128,7 @@ export class NostrUtils {
             }
             
             // Verify the signature
-            return await nobleSecp256k1.schnorr.verify(
+            return await secp.schnorr.verify(
                 event.sig,
                 event.id,
                 '02' + event.pubkey
@@ -126,11 +147,19 @@ export class NostrUtils {
      * @returns {string} - Encrypted message with IV
      */
     static encrypt(privkey, pubkey, text) {
-        var key = nobleSecp256k1.getSharedSecret(privkey, '02' + pubkey, true).substring(2);
+        // Access libraries from either the import or window globals
+        const secp = nobleSecp256k1 || window.nobleSecp256k1;
+        const cipher = browserifyCipher || window.browserifyCipher;
+        
+        if (!secp || !cipher) {
+            throw new Error('Encryption libraries not available');
+        }
+        
+        var key = secp.getSharedSecret(privkey, '02' + pubkey, true).substring(2);
         var iv = window.crypto.getRandomValues(new Uint8Array(16));
-        var cipher = browserifyCipher.createCipheriv('aes-256-cbc', this.hexToBytes(key), iv);
-        var encryptedMessage = cipher.update(text, "utf8", "base64");
-        var emsg = encryptedMessage + cipher.final("base64");
+        var cipherObj = cipher.createCipheriv('aes-256-cbc', this.hexToBytes(key), iv);
+        var encryptedMessage = cipherObj.update(text, "utf8", "base64");
+        var emsg = encryptedMessage + cipherObj.final("base64");
         var uint8View = new Uint8Array(iv.buffer);
         var decoder = new TextDecoder();
         return emsg + "?iv=" + btoa(String.fromCharCode.apply(null, uint8View));
@@ -144,9 +173,17 @@ export class NostrUtils {
      * @returns {string} - Decrypted message
      */
     static decrypt(privkey, pubkey, ciphertext) {
+        // Access libraries from either the import or window globals
+        const secp = nobleSecp256k1 || window.nobleSecp256k1;
+        const cipher = browserifyCipher || window.browserifyCipher;
+        
+        if (!secp || !cipher) {
+            throw new Error('Encryption libraries not available');
+        }
+        
         var [emsg, iv] = ciphertext.split("?iv=");
-        var key = nobleSecp256k1.getSharedSecret(privkey, '02' + pubkey, true).substring(2);
-        var decipher = browserifyCipher.createDecipheriv(
+        var key = secp.getSharedSecret(privkey, '02' + pubkey, true).substring(2);
+        var decipher = cipher.createDecipheriv(
             'aes-256-cbc',
             this.hexToBytes(key),
             this.hexToBytes(this.base64ToHex(iv))

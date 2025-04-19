@@ -4,52 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hypertuna P2P Relay Server</title>
+    <!-- Load our main script that imports all modules -->
     <script type="module" src="main.js"></script>
-     <!-- Load Noble Secp256k1 library -->
-     <script>
-        // Create placeholders for the libraries
-        window.nobleSecp256k1 = null;
-        window.browserifyCipher = null;
-    </script>
-    
-    <!-- Load libraries with proper global variable assignment -->
-    <script>
-        // Create placeholders for the libraries
-        window.nobleSecp256k1 = null;
-        window.browserifyCipher = null;
-    </script>
-    
-    <!-- Load libraries with proper global variable assignment -->
-    <script src="https://bundle.run/noble-secp256k1@1.2.14"></script>
-    <script>
-        // Assign the loaded library to window
-        window.nobleSecp256k1 = window.nobleSecp256k1 || secp256k1;
-    </script>
-    
-    <script src="https://bundle.run/browserify-cipher@1.0.1"></script>
-    <script>
-        // Assign the loaded library to window
-        window.browserifyCipher = window.browserifyCipher || browserifyCipher;
-    </script>
-    <script>
-        // Verify libraries loaded correctly
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('Noble Secp256k1 loaded:', !!window.nobleSecp256k1);
-            console.log('Browserify Cipher loaded:', !!window.browserifyCipher);
-            
-            // Check if key functions exist
-            if (window.nobleSecp256k1) {
-                console.log('getPublicKey function exists:', !!window.nobleSecp256k1.getPublicKey);
-                console.log('schnorr function exists:', !!window.nobleSecp256k1.schnorr);
-            }
-        });
-    </script>
     
     <style>
         /* Keeping your original CSS unchanged */
         :root {
-            --primary-color: #8e44ad;
-            --secondary-color: #9b59b6;
+            --primary-color: #241829;
+            --secondary-color: #55475b;
             --tertiary-color: #ecf0f1;
             --text-color: #2c3e50;
             --light-text: #7f8c8d;

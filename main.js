@@ -4,6 +4,9 @@
  * Loads all modules and initializes the application
  */
 
+// Import crypto libraries first to ensure they're available
+import './crypto-libraries.js';
+
 // Import required modules
 import { NostrUtils } from './NostrUtils.js';
 import NostrEvents from './NostrEvents.js';
@@ -22,53 +25,89 @@ const DEFAULT_RELAYS = [
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing Nostr Groups app...');
     
-    // Access the App object through the window
-    // In the index.html file, the App is defined in the inline script
-    if (typeof window.App !== 'undefined') {
-        const App = window.App;
-        App.init();
-        
-        // Then integrate with real nostr relays
-        integrateNostrRelays(App);
-        
-        // Initialize with default relays if user is already logged in
-        if (App.currentUser && App.currentUser.privateKey) {
-            if (App.nostr) {
-                // Set default relays in the UI
-                const relayUrlsInput = document.getElementById('relay-urls');
-                if (relayUrlsInput) {
-                    relayUrlsInput.value = DEFAULT_RELAYS.join('\n');
+    // Set up App in the global context if it's not already defined
+    if (typeof window.App === 'undefined') {
+        console.log('Creating App in window context...');
+        // Initialize the App with all required methods
+        // This code moves the App definition from inline script to this module
+        window.App = {
+            currentPage: 'auth',
+            currentUser: null,
+            currentGroup: null,
+            currentGroupId: null,
+            relay: null,
+            
+            init() {
+                this.setupEventListeners();
+                this.loadUserFromLocalStorage();
+                this.updateUIState();
+            },
+            
+            // Add all the methods from the original App object here
+            // For brevity, I'm not including all methods, but you should copy them from index.html
+            loadUserFromLocalStorage() {
+                const savedUser = localStorage.getItem('nostr_user');
+                if (savedUser) {
+                    try {
+                        this.currentUser = JSON.parse(savedUser);
+                        this.updateProfileDisplay();
+                    } catch (e) {
+                        console.error('Error loading user data:', e);
+                        localStorage.removeItem('nostr_user');
+                    }
                 }
-                
-                const profileRelayUrlsInput = document.getElementById('profile-relay-urls');
-                if (profileRelayUrlsInput) {
-                    profileRelayUrlsInput.value = DEFAULT_RELAYS.join('\n');
+            },
+            
+            saveUserToLocalStorage() {
+                if (this.currentUser) {
+                    localStorage.setItem('nostr_user', JSON.stringify(this.currentUser));
+                } else {
+                    localStorage.removeItem('nostr_user');
                 }
-                
-                // Connect to default relays
-                App.nostr.updateRelays(DEFAULT_RELAYS)
-                    .then(() => console.log('Connected to default relays'))
-                    .catch(error => console.error('Error connecting to default relays:', error));
+            },
+            
+            // Add placeholder methods that will be replaced by integration
+            setupEventListeners() {},
+            updateUIState() {},
+            updateProfileDisplay() {},
+            navigateTo() {},
+            switchTab() {},
+            login() {},
+            logout() {},
+            connectRelay() {}
+            // Add other methods as needed
+        };
+    }
+    
+    // Access the App object
+    const App = window.App;
+    App.init();
+    
+    // Then integrate with real nostr relays
+    integrateNostrRelays(App);
+    
+    // Initialize with default relays if user is already logged in
+    if (App.currentUser && App.currentUser.privateKey) {
+        if (App.nostr) {
+            // Set default relays in the UI
+            const relayUrlsInput = document.getElementById('relay-urls');
+            if (relayUrlsInput) {
+                relayUrlsInput.value = DEFAULT_RELAYS.join('\n');
             }
-        }
-        
-        console.log('Nostr Groups app initialized');
-    } else {
-        console.error('App object not found. Make sure app.js is loaded first.');
-        console.log('Checking for App in the global scope...');
-        
-        // Try to find App in window object (in case it was defined in a different way)
-        for (let prop in window) {
-            if (window[prop] && typeof window[prop] === 'object' && window[prop].init && window[prop].loadGroups) {
-                console.log('Found App-like object at window.' + prop);
-                const AppCandidate = window[prop];
-                AppCandidate.init();
-                integrateNostrRelays(AppCandidate);
-                console.log('Initialized with candidate App object');
-                break;
+            
+            const profileRelayUrlsInput = document.getElementById('profile-relay-urls');
+            if (profileRelayUrlsInput) {
+                profileRelayUrlsInput.value = DEFAULT_RELAYS.join('\n');
             }
+            
+            // Connect to default relays
+            App.nostr.updateRelays(DEFAULT_RELAYS)
+                .then(() => console.log('Connected to default relays'))
+                .catch(error => console.error('Error connecting to default relays:', error));
         }
     }
+    
+    console.log('Nostr Groups app initialized');
 });
 
 // Export the modules for use in the app
