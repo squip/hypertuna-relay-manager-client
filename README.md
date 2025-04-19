@@ -1,6 +1,10 @@
 # hypertuna-relay-manager-client
 a simple NOSTR client app for creating, joining, and managing your Hypertuna Relay instances
 
+**Initialization Instructions:**
+1. `git clone https://github.com/squip/hypertuna-relay-manager-client`
+2. `pear run --dev .` 
+
 **Note:**
 
 - This is an ongoing work-in-progress, to be used as the front-end of an integrated Hypertuna Relay Manager client application built on top of:
