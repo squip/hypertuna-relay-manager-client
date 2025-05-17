@@ -912,17 +912,17 @@ class NostrGroupClient {
         // Filter for Hypertuna groups using the identifier tag
         const hypertunaGroups = allGroups.filter(group => {
             // Check if this is a Hypertuna relay group using the identifier tag
-            const isHypertunaRelay = group.isHypertunaRelay || 
-                                  (group.event && group.event.tags.some(tag => 
-                                      tag[0] === 'i' && tag[1] === 'hypertuna:relay'));
-            
+            const isHypertunaRelay = group.isHypertunaRelay ||
+                (group.event && group.event.tags.some(tag =>
+                    tag[0] === 'i' && tag[1] === 'hypertuna:relay'));
+
             // Check if it has a hypertuna ID
             const hasHypertunaId = !!group.hypertunaId;
-            
+
             console.log(`Group ${group.id}: isHypertunaRelay=${isHypertunaRelay}, hasHypertunaId=${hasHypertunaId}`);
-            
-            // For debugging, include all groups to see what's available
-            return true;
+
+            // Only include groups that are marked as Hypertuna relay groups and have a Hypertuna ID
+            return isHypertunaRelay && hasHypertunaId;
         });
         
         console.log(`Filtered groups: ${hypertunaGroups.length}`);
